@@ -29,7 +29,7 @@ Objective-C既不支持多重继承，也没有使用Interface关键词作为接
 
 Class A中：
 
-```
+```objc
 - (void)doSth:(B *)b
 {
 　　[b doSth];
@@ -40,7 +40,7 @@ Class A中：
 
 定义一个protocol：
 
-```
+```objc
 @protocol doSthDelegate
 
 (void)doSth;
@@ -50,7 +50,7 @@ Class A中：
 
 Class A中：
 
-```
+```objc
 - (void)doSth:(id<doSthDelegate>) delegate
 {
 　　if (delegate)
@@ -65,7 +65,7 @@ Class A中：
 
 协议protocol其实是足以支持接口的语法实现的，但对于需要频繁调用的方法来说，未免不够简洁。如在NSObject协议中声明的alloc、dealloc、retain、release和autoRelease等几乎出现在iOS开发各个角落的方法，如果都需要
 
-```
+```objc
 if (delegate && delegate respondsToSelector:@selector(func)
 {
 　　[delegate func];

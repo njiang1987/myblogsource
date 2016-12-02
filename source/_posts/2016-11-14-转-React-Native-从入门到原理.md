@@ -41,13 +41,13 @@ React Native 是最近非常火的一个话题，介绍如何利用 React Native
 
 在这三者的配合下，几乎所有页面上的功能都能实现。但也有比较不爽地方，比如我想动态修改一个按钮的文字，我需要这样写：
 
-```
+```html
 <button type="button" id="button" onclick="onClick()">old button</button>
 ```
 
 然后在 JavaScript 中操作 DOM：
 
-```
+```html
 <script>
 function onClick() {
   document.getElementById('button').innerHTML='new button';
@@ -61,7 +61,7 @@ function onClick() {
 
 随着 FaceBook 推出了 React 框架，这个问题得到了大幅度改善。我们可以把一组相关的 HTML 标签，也就是 app 内的 UI 控件，封装进一个组件(Component)中，我从[阮一峰的 React 教程](http://www.ruanyifeng.com/blog/2015/03/react.html)中摘录了一段代码：
 
-```
+```javascript
 var MyComponent = React.createClass({
   handleClick: function() {
     this.refs.myTextInput.focus();
@@ -137,7 +137,7 @@ React Native 不是黑科技，我们写的代码总是以一种非常合理，�
 
 苹果提供了一个叫做 JavaScript Core 的框架，这是一个 JavaScript 引擎。通过下面这段代码可以简单的感受一下 Objective-C 如何调用 JavaScript 代码：
 
-```
+```objc
 JSContext *context = [[JSContext alloc] init];
 JSValue *jsVal = [context evaluateScript:@"21+7"];
 int iVal = [jsVal toInt32];
@@ -199,7 +199,7 @@ Objective-C 会向 Block 中传入参数和 `BlockId`，然后在 Block 内部�
 
 每个项目都有一个入口，然后进行初始化操作，React Native 也不例外。一个不含 Objective-C 代码的项目留给我们的唯一线索就是位于 `AppDelegate` 文件中的代码：
 
-```
+```objc
 RCTRootView *rootView = [[RCTRootView alloc] initWithBundleURL:jsCodeLocation
                                                     moduleName:@"PropertyFinder"
                                              initialProperties:nil
@@ -234,7 +234,7 @@ RCTRootView *rootView = [[RCTRootView alloc] initWithBundleURL:jsCodeLocation
 
 这一步在方法 `initModulesWithDispatchGroup:` 中实现，主要任务是找到所有需要暴露给 JavaScript 的类。每一个需要暴露给 JavaScript 的类(也成为 Module，以下不作区分)都会标记一个宏：`RCT_EXPORT_MODULE`，这个宏的具体实现并不复杂：
 
-```
+```objc
 #define RCT_EXPORT_MODULE(js_name) \
 RCT_EXTERN void RCTRegisterModule(Class); \
 + (NSString *)moduleName { return @#js_name; } \
@@ -243,7 +243,7 @@ RCT_EXTERN void RCTRegisterModule(Class); \
 
 这样，这个类在 `load` 方法中就会调用 `RCTRegisterModule` 方法注册自己：
 
-```
+```objc
 void RCTRegisterModule(Class moduleClass)
 {
   static dispatch_once_t onceToken;
@@ -257,7 +257,7 @@ void RCTRegisterModule(Class moduleClass)
 
 因此，React Native 可以通过 `RCTModuleClasses` 拿到所有暴露给 JavaScript 的类。下一步操作是遍历这个数组，然后生成 `RCTModuleData` 对象：
 
-```
+```objc
 for (Class moduleClass in RCTGetModuleClasses()) {
     RCTModuleData *moduleData = [[RCTModuleData alloc]initWithModuleClass:moduleClass                                                                      bridge:self];
     [moduleClassesByID addObject:moduleClass];
@@ -271,7 +271,7 @@ for (Class moduleClass in RCTGetModuleClasses()) {
 
 暴露给 JavaScript 的方法需要用 `RCT_EXPORT_METHOD` 这个宏来标记，它的实现原理比较复杂，有兴趣的读者可以自行阅读。简单来说，它为函数名加上了 `__rct_export__` 前缀，再通过 runtime 获取类的函数列表，找出其中带有指定前缀的方法并放入数组中:
 
-```
+```objc
 - (NSArray<id<RCTBridgeMethod>> *)methods{
     unsigned int methodCount;
     Method *methods = class_copyMethodList(object_getClass(_moduleClass), &methodCount); // 获取方法列表
@@ -290,7 +290,7 @@ for (Class moduleClass in RCTGetModuleClasses()) {
 
 通过查看源码可以看到，初始化 JavaScript 执行器的时候，`addSynchronousHookWithName` 这个方法被调用了多次，它其实向 JavaScript 上下文中添加了一些 Block 作为全局变量：
 
-```
+```objc
 - (void)addSynchronousHookWithName:(NSString *)name usingBlock:(id)block {
     self.context.context[name] = block;
 }
@@ -302,7 +302,7 @@ for (Class moduleClass in RCTGetModuleClasses()) {
 
 这里我们需要重点注意的是名为 `nativeRequireModuleConfig` 的 Block，它在 JavaScript 注册新的模块时调用：
 
-```
+```javascript
 get: () => {
     let module = RemoteModules[moduleName];
     const json = global.nativeRequireModuleConfig(moduleName); // 调用 OC 的 Block
@@ -316,7 +316,7 @@ get: () => {
 
 **另一个值得关注的** Block 叫做 `nativeFlushQueueImmediate`。实际上，JavaScript 除了把调用信息放到 MessageQueue 中等待 Objective-C 来取以外，也可以主动调用 Objective-C 的方法：
 
-```
+```js
 if (global.nativeFlushQueueImmediate &&
     now - this._lastFlush >= MIN_TIME_BETWEEN_FLUSHES_MS) {
     global.nativeFlushQueueImmediate(this._queue); // 调用 OC 的代码
@@ -325,7 +325,7 @@ if (global.nativeFlushQueueImmediate &&
 
 目前，React Native 的逻辑是，如果消息队列中有等待 Objective-C 处理的逻辑，而且 Objective-C 超过 5ms 都没有来取走，那么 JavaScript 就会主动调用 Objective-C 的方法：
 
-```
+```objc
 [self addSynchronousHookWithName:@"nativeFlushQueueImmediate" usingBlock:^(NSArray<NSArray *> *calls){
     [self->_bridge handleBuffer:calls batchEnded:NO];
 }];
@@ -335,7 +335,7 @@ if (global.nativeFlushQueueImmediate &&
 
 一般情况下，Objective-C 会定时、主动的调用 `handleBuffer` 方法，这有点类似于轮询机制：
 
-```
+```js
 // 每个一段时间发生一次：
 Objective-C：嘿，JavaScript，有没有要调用我的方法呀？
 JavaScript：有的，你从 MessageQueue 里面取出来。
@@ -351,7 +351,7 @@ JavaScript：有的，你从 MessageQueue 里面取出来。
 
 这一步的操作就是为了让 JavaScript 获取所有模块的名字：
 
-```
+```objc
 - (NSString *)moduleConfig{
     NSMutableArray<NSArray *> *config = [NSMutableArray new];
     for (RCTModuleData *moduleData in _moduleDataByID) {
@@ -384,7 +384,7 @@ JavaScript：有的，你从 MessageQueue 里面取出来。
 
 也许你在其他文章中曾经多次听说 JavaScript 代码总是在一个单独的线程上面调用，它的实际含义是 Objective-C 会在单独的线程上运行 JavaScript 代码：
 
-```
+```objc
 - (void)executeBlockOnJavaScriptQueue:(dispatch_block_t)block
 {
   if ([NSThread currentThread] != _javaScriptThread) {
@@ -398,7 +398,7 @@ JavaScript：有的，你从 MessageQueue 里面取出来。
 
 调用 JavaScript 代码的核心代码如下：
 
-```
+```objc
 - (void)_executeJSCall:(NSString *)method
              arguments:(NSArray *)arguments
               callback:(RCTJavaScriptCallback)onComplete{
@@ -417,7 +417,7 @@ JavaScript：有的，你从 MessageQueue 里面取出来。
 
 在实际使用的时候，我们可以这样发起对 JavaScript 的调用：
 
-```
+```objc
 [_bridge.eventDispatcher sendAppEventWithName:@"greeted"
                                          body:@{ @"name": @"nmae"}];
 ```
@@ -432,7 +432,7 @@ Objective-C 负责处理调用的方法是 `handleBuffer`，它的参数是一�
 
 函数内部在每一次方调用中调用 `_handleRequestNumber:moduleID:methodID:params` 方法。，通过查找模块配置表找出要调用的方法，并通过 runtime 动态的调用：
 
-```
+```objc
 [method invokeWithBridge:self module:moduleData.instance arguments:params];
 ```
 
@@ -442,7 +442,7 @@ Objective-C 负责处理调用的方法是 `handleBuffer`，它的参数是一�
 
 俗话说：“思而不学则神棍”，下面举一个例子来演示 Objective-C 是如何与 JavaScript 进行交互的。首先新建一个模块：
 
-```
+```objc
 // .h 文件
 #import <Foundation/Foundation.h>
 #import "RCTBridgeModule.h"
@@ -454,7 +454,7 @@ Objective-C 负责处理调用的方法是 `handleBuffer`，它的参数是一�
 
 `Person` 这个类是一个新的模块，它有两个方法暴露给 JavaScript：
 
-```
+```objc
 #import "Person.h"
 #import "RCTEventDispatcher.h"
 #import "RCTConvert.h"
@@ -482,7 +482,7 @@ RCT_EXPORT_METHOD(greetss:(NSString *)name name2:(NSString *)name2 callback:(RCT
 
 在 JavaScript 中，可以这样调用：
 
-```
+```js
 Person.greet('Tadeu');
 Person.greetss('Haha', 'Heihei', (events) => {
   for (var i = 0; i < events.length; i++) {

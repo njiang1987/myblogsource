@@ -21,7 +21,7 @@ tableview优化最主要：复用cell，header，footer实例；使用约束布�
 
 自适应高度的cell实现方式有很多种，比如，1.使用iOS7以上系统的                        
 
-```
+```swift
 func tableView(tableView: UITableView, estimatedHeightForRowAtIndexPath indexPath: NSIndexPath) -> CGFloat
 ```
 
@@ -32,14 +32,14 @@ func tableView(tableView: UITableView, estimatedHeightForRowAtIndexPath indexPat
 
 这时在高度计算方法中，走一遍cell的loaddata方法后可以通过
 
-```
+```swift
 func systemLayoutSizeFittingSize(targetSize: CGSize) -> CGSize
 ```
 
 取得cell的size，进而得到cell高度。通过这个方法获取的cell高度是十分精确的，只要创建好子控件的约束就能获得cell的size。比较不好的是这种方法会重走一遍cell的loaddata方法。除此之外在调用cell的loaddata之前需要得到cell的实例，实例创建的方式应该与cellForRow方法一样，优先从缓存池中取得。
 这个方案可能会创建多个cell。如果能在内存汇总保存一份cell的实例就能解决这个问题了！我讲讲我实现的思路：首先先注册cell,当缓存池中没有cell时系统会自动创建，有的话会直接取缓存中的cell返回给你。
 
-```
+```swift
 override func viewDidLodad() { 
       tableView.registerClass(CardCell.self, forCellReuseIdentifier: ID)
 }
@@ -47,7 +47,7 @@ override func viewDidLodad() {
 
 用lazy创建一个cell实例，由于lazy 关键字，cell的创建只会执行一次lazy 
 
-```
+```swift
 var cell:CardCell = {
  //已经注册过cell，当缓存池中没有cell时系统会自动创建，有的话会直接取缓存中的cell返回
  let v = self.myTableView?.dequeueReusableCellWithIdentifier(self.ID) as! CardCell return v 
@@ -56,7 +56,7 @@ var cell:CardCell = {
 
 通过懒加载的方式，只创建一次cell的实例，避免内存浪费。接下来要做的步骤就是之前讲的，调用cell的loadData方法，计算高度
 
-```
+```swift
 func tableView(tableView: UITableView, heightForRowAtIndexPath indexPath: NSIndexPath) -> CGFloat { 
       self.imageCell.loadData(d) 
       let height:CGFloat = self.cell.contentView.systemLayoutSizeFittingSize(UILayoutFittingCompressedSize).heightreturn height
@@ -70,7 +70,7 @@ func tableView(tableView: UITableView, heightForRowAtIndexPath indexPath: NSInde
 **避免快速滑动情况下开过多线程。**
 cell中的图片开线程异步加载，相信每个人都会想到。线程开过多了会造成资源浪费，内存开销过大。图片过多时可以不要一滚动就走cellForRow方法，可以在scrollview的代理方法中做限制，当滚动开始减速的时候才加载显示在当前屏幕上的cell（通过tableview的dragging和declearating两个状态也能判断）
 
-```
+```swift
 func tableView(tableView: UITableView, cellForRowAtIndexPath indexPath: NSIndexPath) -> UITableViewCell 
 { 
       var canLoad:Bool = !tableView.dragging && !tableView.decelearating 

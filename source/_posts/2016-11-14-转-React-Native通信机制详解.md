@@ -17,7 +17,7 @@ React Native用iOS自带的JavaScriptCore作为JS的解析引擎，但并没有�
 
 
 
-```objective-c
+```objc
 //OC:
 @implement
 RCTSQLManager
@@ -25,14 +25,13 @@ RCTSQLManager
 *)queryData successCallback:(RCTResponseSenderBlOCk)responseSender
 {
      RCT_EXPORT();
-     NSString
-*ret = @"ret"
+     NSString *ret = @"ret"
      responseSender(ret);
 }
 @end
 ```
 
-```javascript
+```js
 //JS:
 RCTSQLManager.query("SELECT * FROM table", function(result) {
      //result == "ret";

@@ -24,14 +24,14 @@ tags: [iOS]
 
 #### 子类化NSURLProtocol并注册
 
-```
+```objc
 @interface CustomURLProtocol : NSURLProtocol
 @end
 ```
 
 然后在application:didFinishLaunchingWithOptions:方法中注册该CustomURLProtocol，一旦注册完毕后，它就有机会来处理所有交付给URL Loading system的网络请求。
 
-```
+```objc
 - (BOOL)application:(UIApplication *)application didFinishLaunchingWithOptions:(NSDictionary *)launchOptions {
     //注册protocol
     [NSURLProtocol registerClass:[CustomURLProtocol class]];
@@ -47,7 +47,7 @@ tags: [iOS]
   这个方法主要是说明你是否打算处理对应的request，如果不打算处理，返回NO，URL Loading System会使用系统默认的行为去处理；如果打算处理，返回YES，然后你就需要处理该请求的所有东西，包括获取请求数据并返回给 URL Loading System。网络数据可以简单的通过NSURLConnection去获取，而且每个NSURLProtocol对象都有一个NSURLProtocolClient实例，可以通过该client将获取到的数据返回给URL Loading System。
   这里有个需要注意的地方，想象一下，当你去加载一个URL资源的时候，URL Loading System会询问CustomURLProtocol是否能处理该请求，你返回YES，然后URL Loading System会创建一个CustomURLProtocol实例然后调用NSURLConnection去获取数据，然而这也会调用URL Loading System，而你在+canInitWithRequest:中又总是返回YES，这样URL Loading System又会创建一个CustomURLProtocol实例导致无限循环。我们应该保证每个request只被处理一次，可以通过+setProperty:forKey:inRequest:标示那些已经处理过的request，然后在+canInitWithRequest:中查询该request是否已经处理过了，如果是则返回NO。
 
-```
+```objc
 + (BOOL)canInitWithRequest:(NSURLRequest *)request
 {
   //只处理http和https请求
@@ -69,7 +69,7 @@ tags: [iOS]
 - +canonicalRequestForRequest:
   通常该方法你可以简单的直接返回request，但也可以在这里修改request，比如添加header，修改host等，并返回一个新的request，这是一个抽象方法，子类必须实现。
 
-```
+```objc
 + (NSURLRequest *) canonicalRequestForRequest:(NSURLRequest *)request {
     NSMutableURLRequest *mutableReqeust = [request mutableCopy];
     mutableReqeust = [self redirectHostInRequset:mutableReqeust];
@@ -103,7 +103,7 @@ tags: [iOS]
 - +requestIsCacheEquivalent:toRequest:
   主要判断两个request是否相同，如果相同的话可以使用缓存数据，通常只需要调用父类的实现。
 
-```
+```objc
 + (BOOL)requestIsCacheEquivalent:(NSURLRequest *)a toRequest:(NSURLRequest *)b
 {
     return [super requestIsCacheEquivalent:a toRequest:b];
@@ -113,7 +113,7 @@ tags: [iOS]
 - -startLoading  -stopLoading
   这两个方法主要是开始和取消相应的request，而且需要标示那些已经处理过的request。
 
-```
+```objc
 - (void)startLoading
 {
     NSMutableURLRequest *mutableReqeust = [[self request] mutableCopy];
@@ -131,7 +131,7 @@ tags: [iOS]
 - NSURLConnectionDataDelegate方法
   在处理网络请求的时候会调用到该代理方法，我们需要将收到的消息通过client返回给URL Loading System。
 
-```
+```objc
 - (void) connection:(NSURLConnection *)connection didReceiveResponse:(NSURLResponse *)response {
     [self.client URLProtocol:self didReceiveResponse:response cacheStoragePolicy:NSURLCacheStorageNotAllowed];
 }

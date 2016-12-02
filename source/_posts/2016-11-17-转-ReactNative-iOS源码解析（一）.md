@@ -168,7 +168,7 @@ RCTJSCExecutor是一个特殊的module，是核心，所以这里会单独处理
 
 如果觉得绕可以这么理解他会在专属的队列里执行2件事情（后面要说的2各标记），当这2个事情执行完后触发子group notify，执行第三件事情（后面要说的第三个标记），当第三个事情执行完后leave母group，触发母group notify
 
-```
+```objc
 dispatch_group_enter(initModulesAndLoadSource);
   dispatch_async(bridgeQueue, ^{
     dispatch_group_t setupJSExecutorAndModuleConfig = dispatch_group_create();
@@ -274,7 +274,7 @@ JS call OC 可以有很多个方法，但是所有的方法一定会走到同一
 
 **analyze buffer标记**：js传过来的buffer其实是一串calls的数组，一次性发过来好几个消息，需要OC处理，所以会解析buffer，分别识别出每一个call的module信息
 
-```
+```objc
 NSArray<NSNumber *> *moduleIDs = [RCTConvert NSNumberArray:requestsArray[RCTBridgeFieldRequestModuleIDs]];
 NSArray<NSNumber *> *methodIDs = [RCTConvert NSNumberArray:requestsArray[RCTBridgeFieldMethodIDs]];
 NSArray<NSArray *> *paramsArrays = [RCTConvert NSArrayArray:requestsArray[RCTBridgeFieldParams]];

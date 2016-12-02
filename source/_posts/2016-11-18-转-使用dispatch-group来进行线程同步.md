@@ -15,7 +15,7 @@ tags: [iOS]
 
 #### 1、dispatch_group_async
 
-```
+```objc
  Submits a block to a dispatch queue and associates the block with the given
   dispatch group
 //将一个block(代码块)加入到dispatch_queue_t queue中并和dispatch_group_t group相关联
@@ -29,7 +29,7 @@ dispatch_group_async(dispatch_group_t group,
 
 #### 2、dispatch_group_enter(group)、dispatch_group_leave(group)
 
-```
+```objc
    Calling this function indicates another block has joined the group through
   a means other than dispatch_group_async(). Calls to this function must be
  * balanced with dispatch_group_leave().
@@ -43,7 +43,7 @@ dispatch_group_enter(dispatch_group_t group);
 
 #### 3、dispatch_group_notify
 
-```
+```objc
 void
 dispatch_group_notify(dispatch_group_t group,dispatch_queue_t queue,
 dispatch_block_t block);
@@ -53,7 +53,7 @@ dispatch_block_t block);
 
 4、dispatch_group_wait
 
-```
+```objc
 long
 dispatch_group_wait(dispatch_group_t group, dispatch_time_t timeout);
 ```
@@ -64,7 +64,7 @@ dispatch_group_wait(dispatch_group_t group, dispatch_time_t timeout);
 
 二、dispatch_group_async代码示例
 
-```
+```objc
 - (void)groupSync
 {
     dispatch_queue_t disqueue =  dispatch_queue_create("com.shidaiyinuo.NetWorkStudy", DISPATCH_QUEUE_CONCURRENT);
@@ -95,7 +95,7 @@ dispatch_group_wait(dispatch_group_t group, dispatch_time_t timeout);
 **需要注意的：**dispatch_group_wait是同步的所以不能放在主线程执行。
 **补充：** dispatch_group会等和它关联的所有的dispatch_queue_t上的任务都执行完毕才会发出同步信号(**dispathc_group_notify的代码块block会被执行,group_wati会结束等待**)。也就是说一个group可以关联多个任务队列；下面给出示例：
 
-```
+```objc
 - (void)groupSync2
 {
     dispatch_queue_t dispatchQueue = dispatch_queue_create("ted.queue.next1", DISPATCH_QUEUE_CONCURRENT);
@@ -129,7 +129,7 @@ dispatch_group_wait(dispatch_group_t group, dispatch_time_t timeout);
 
 下面是代码示例：
 
-```
+```objc
 - (void)groupSync
 {
     dispatch_group_t group = dispatch_group_create();
